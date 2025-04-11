@@ -12,7 +12,7 @@
 #define BACK  5
 
 #define MAXARGS 10
-
+char buffer[32] ;
 struct cmd {
   int type;
 };
@@ -66,7 +66,7 @@ runcmd(struct cmd *cmd)
   struct redircmd *rcmd;
 
   if(cmd == 0)
-    exit(1);
+    exit(1,"");
 
   switch(cmd->type){
   default:
@@ -75,7 +75,7 @@ runcmd(struct cmd *cmd)
   case EXEC:
     ecmd = (struct execcmd*)cmd;
     if(ecmd->argv[0] == 0)
-      exit(1);
+      exit(1,"");
     exec(ecmd->argv[0], ecmd->argv);
     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
     break;
@@ -85,7 +85,8 @@ runcmd(struct cmd *cmd)
     close(rcmd->fd);
     if(open(rcmd->file, rcmd->mode) < 0){
       fprintf(2, "open %s failed\n", rcmd->file);
-      exit(1);
+
+      exit(1,"");
     }
     runcmd(rcmd->cmd);
     break;
@@ -94,7 +95,7 @@ runcmd(struct cmd *cmd)
     lcmd = (struct listcmd*)cmd;
     if(fork1() == 0)
       runcmd(lcmd->left);
-    wait(0);
+    wait(0,buffer);
     runcmd(lcmd->right);
     break;
 
@@ -118,8 +119,8 @@ runcmd(struct cmd *cmd)
     }
     close(p[0]);
     close(p[1]);
-    wait(0);
-    wait(0);
+    wait(0,buffer);
+    wait(0,buffer);
     break;
 
   case BACK:
@@ -128,7 +129,7 @@ runcmd(struct cmd *cmd)
       runcmd(bcmd->cmd);
     break;
   }
-  exit(0);
+  exit(0,"");
 }
 
 int
@@ -147,7 +148,7 @@ main(void)
 {
   static char buf[100];
   int fd;
-
+  
   // Ensure that three file descriptors are open.
   while((fd = open("console", O_RDWR)) >= 0){
     if(fd >= 3){
@@ -167,16 +168,21 @@ main(void)
     }
     if(fork1() == 0)
       runcmd(parsecmd(buf));
-    wait(0);
+    wait(0,buffer);
+    if(buffer[0] != '\0'){
+    printf("Process exited with message: %s \n" , buffer) ;
+    }
   }
-  exit(0);
+  
+  exit(0,"");
+  
 }
 
 void
 panic(char *s)
 {
   fprintf(2, "%s\n", s);
-  exit(1);
+  exit(1,"");
 }
 
 int

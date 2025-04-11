@@ -12,7 +12,7 @@
 #include "user/user.h"
 #include "kernel/fs.h"
 #include "kernel/fcntl.h"
-
+char buffer[32] ;
 int
 main(int argc, char *argv[])
 {
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
     read(fd, data, sizeof(data));
   close(fd);
 
-  wait(0);
+  wait(0,buffer);
 
-  exit(0);
+  exit(0 , "");
 }
