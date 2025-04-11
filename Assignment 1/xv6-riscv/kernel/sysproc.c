@@ -10,7 +10,10 @@ uint64
 sys_exit(void)
 {
   int n;
-  argint(0, &n);
+  char exit_msg[32] ;
+  argint(0, &n); 
+  argstr(1, exit_msg , 32) ;
+  safestrcpy(myproc()->exit_msg , exit_msg , 32) ;
   exit(n);
   return 0;  // not reached
 }
@@ -27,12 +30,36 @@ sys_fork(void)
   return fork();
 }
 
+uint64 sys_forkn(void){
+  int* pids;
+  int n; 
+  argint(0, &n); 
+  if(n < 1 || n >= 16){
+    return -1;
+  }   
+  argaddr(1 , (uint64 *)&pids);
+  return forkn(n, pids);
+
+}
+
+
 uint64
 sys_wait(void)
 {
   uint64 p;
+  uint64 msg_addr ;
   argaddr(0, &p);
-  return wait(p);
+  argaddr(1, &msg_addr);
+  return wait(p ,msg_addr );
+}
+uint64 sys_waitall(void)
+{
+  uint64 n;
+  uint64 statuses; // Pointer to the statuses array
+
+  argaddr(0, &n);
+  argaddr(1, &statuses);
+  return waitall(n, statuses); // Wait for child process
 }
 
 uint64
@@ -89,7 +116,7 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-uint64
-sys_memsize(void){
-  return myproc()->sz;
+
+uint64 sys_memsize(void) {
+    return myproc()->sz ;
 }
