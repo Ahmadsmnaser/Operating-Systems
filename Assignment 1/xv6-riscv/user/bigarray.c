@@ -1,75 +1,110 @@
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"
-#define ARRAY_SIZE (1 << 16) // 2^16 = 65536
 
-// Global array
-int arr[ARRAY_SIZE];
+#define ARR_LEN (1 << 16) // 65536 elements
 
-void task4(int n)
+int numbers[ARR_LEN]; // Global data array
+
+void validate_input(int n)
 {
     if (n <= 0 || n >= 16)
     {
-        printf("Invalid value of n. n must be between 1 and 16 (exclusive).\n");
-        return;
+        printf("Error: n must be 1-15\n");
+        exit(1, "Invalid input");
     }
-
-    int pids[n]; // Array to store PIDs
-
-    // Parent process: initialize the array with consecutive numbers
-    for (int i = 0; i < ARRAY_SIZE; i++)
-    {
-        arr[i] = i;
-    }
-    // Create n child processes
-    int ret = forkn(n, pids);
-    if (ret == -1)
-    {
-        printf("forkn(%d) failed\n", n);
-        return;
-    }
-
-    // Child process: compute the sum of its assigned portion of the array
-    if (ret >= 1)
-    {
-        int base_size = ARRAY_SIZE / n;                                                  // Base size per child
-        int remainder = ARRAY_SIZE % n;                                                  // Remainder to distribute
-        int start = (ret - 1) * base_size + (ret - 1 < remainder ? ret - 1 : remainder); // Partition start index
-        int end = start + base_size + (ret <= remainder ? 1 : 0);                        // Partition end index
-        int sum = 0;
-
-        // Sum the array portion
-        for (int i = start; i < end; i++)
-        {
-            sum += arr[i];
-        }
-        sleep(ret);
-        printf("Child %d  sum: %d\n", ret, sum);
-        exit(sum, " ");
-    }
-
-    // Parent process: wait for all children and compute the final sum
-    int finished;
-    int statuses[n];
-    if (waitall(&finished, statuses) < 0)
-    {
-        printf("waitall failed\n");
-        exit(1, "from here 1");
-    }
-
-    // Compute the final sum
-    int total_sum = 0;
-    for (int i = 0; i < n; i++)
-    {
-        total_sum += statuses[i];
-        printf("Child %d exited with status: %d\n", i + 1, statuses[i]);
-    }
-    printf("Total sum: %d\n", total_sum);
 }
 
-int main()
+void initialize_array()
 {
-    int n = 5;
-    task4(n); // Call task4 with the specified number of child processes
-    exit(0, "\n===== All tests finished! =====\n");
+    for (int idx = 0; idx < ARR_LEN; idx++)
+    {
+        numbers[idx] = idx;
+    }
+}
+
+void child_work(int child_num, int total_children)
+{
+    // Calculate partition boundaries
+    int base_chunk = ARR_LEN / total_children;
+    int extra = ARR_LEN % total_children;
+
+    int lower_bound = child_num * base_chunk;
+    if (child_num < extra)
+    {
+        lower_bound += child_num;
+    }
+    else
+    {
+        lower_bound += extra;
+    }
+
+    int upper_bound = lower_bound + base_chunk;
+    if (child_num < extra)
+    {
+        upper_bound += 1;
+    }
+
+    // Compute partial sum
+    int partial_sum = 0;
+    for (int i = lower_bound; i < upper_bound; i++)
+    {
+        partial_sum += numbers[i];
+    }
+
+    sleep(child_num + 1);
+    printf("Worker %d computed sum: %d\n", child_num + 1, partial_sum);
+    exit(partial_sum, "child exit");
+}
+
+void parent_work(int child_count, int *child_pids)
+{
+    int completed;
+    int results[child_count];
+
+    if (waitall(&completed, results) < 0)
+    {
+        printf("Error in waitall\n");
+        exit(1, "waitall failed");
+    }
+
+    int grand_total = 0;
+    for (int i = 0; i < child_count; i++)
+    {
+        grand_total += results[i];
+        printf("Child %d returned: %d\n", i + 1, results[i]);
+    }
+    printf("Combined total: %d\n", grand_total);
+}
+
+void parallel_sum(int process_count)
+{
+    validate_input(process_count);
+    initialize_array();
+
+    int child_ids[process_count];
+    int fork_result = forkn(process_count, child_ids);
+
+    if (fork_result == -1)
+    {
+        printf("Failed to create processes\n");
+        exit(1, "forkn error");
+    }
+
+    if (fork_result > 0)
+    {
+        // Child process
+        child_work(fork_result - 1, process_count);
+    }
+    else
+    {
+        // Parent process
+        parent_work(process_count, child_ids);
+    }
+}
+
+int main(void)
+{
+    parallel_sum(5); // Use 5 worker processes
+    exit(0, "Program completed successfully\n");
 }
