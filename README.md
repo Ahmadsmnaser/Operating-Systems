@@ -5,7 +5,7 @@ This project consists of kernel modifications and extensions for xv6 (a teaching
 The goal was to deepen my understanding of low-level systems programming, concurrency, and process-kernel interaction.
 
 ## 🎯 Key Enhancements  
-- ✅ Added new system calls (for example: `sys_foo`, `sys_bar`)  
+- ✅ Added new system calls   
 - ✅ Implemented shared memory between user processes using page-table reference counting  
 - ✅ Developed synchronization primitives: sleep/wakeup, locks, and condition variables  
 - ✅ Extended xv6 to support safe user→kernel data transfer and process memory management improvements  
@@ -29,21 +29,20 @@ User Process ↔ Kernel (xv6)
 - **Concepts:** Virtual memory, system calls, sleep/wakeup, locks, synchronization, shared memory  
 
 ## ▶️ Build & Run  
-```bash
-cd Operating-Systems/xv6
-make qemu
 
-Choose test mode my_test or instructions in my_extensions to observe new syscalls and shared memory functionality.
-🔮 Future Improvements
+- cd Operating-Systems/xv6
+- make qemu
 
-    Add support for multiple shared-memory segments per process
+## 🔮 Future Improvements
 
-    Implement priority inheritance for locks to avoid priority inversion
+   - Add support for multiple shared-memory segments per process
 
-    Add statistical monitoring of lock usage and process wait times
+   - Implement priority inheritance for locks to avoid priority inversion
 
-    Extend to multiprocessor xv6 environment
-طط
+   - Add statistical monitoring of lock usage and process wait times
+
+   - Extend to multiprocessor xv6 environment
+
 ##🧑‍💻 Author
 
 - Ahmad Naser
