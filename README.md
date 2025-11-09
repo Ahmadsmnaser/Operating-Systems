@@ -43,7 +43,7 @@ User Process ↔ Kernel (xv6)
 
    - Extend to multiprocessor xv6 environment
 
-##🧑‍💻 Author
 
+🧑‍💻 Author
 - Ahmad Naser
 📧 Ahmadsmnaser@gmail.com
